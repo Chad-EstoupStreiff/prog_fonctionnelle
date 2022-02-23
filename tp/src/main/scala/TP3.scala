@@ -10,23 +10,45 @@ object TP3Ex1:
    * sanguins. */
 
   /* Remplacez cette déclaration de type par une définition utilisant 'enum'*/
-  type BloodGroup = Nothing
+  enum GroupABO:
+    case A
+    case B
+    case AB
+    case O
+
+  enum GroupRhesus:
+    case minus
+    case plus
+
+  enum BloodGroup:
+    case construct(g: GroupABO, r: GroupRhesus)
+
+  type GroupBlood2 = GroupABO => GroupRhesus
 
   /* Complétez la fonction suivante */
   def valueOf(s: String): BloodGroup = s match
-    case "A+" => ???
-    case "B+" => ???
-    case "AB+" => ???
-    case "O+" => ???
-    case "A-" => ???
-    case "B-" => ???
-    case "AB-" => ???
-    case "O-" => ???
+    case "A+" => BloodGroup.construct(GroupABO.A, GroupRhesus.plus)
+    case "B+" => BloodGroup.construct(GroupABO.B, GroupRhesus.plus)
+    case "AB+" => BloodGroup.construct(GroupABO.AB, GroupRhesus.plus)
+    case "O+" => BloodGroup.construct(GroupABO.O, GroupRhesus.plus)
+    case "A-" => BloodGroup.construct(GroupABO.A, GroupRhesus.minus)
+    case "B-" => BloodGroup.construct(GroupABO.B, GroupRhesus.minus)
+    case "AB-" => BloodGroup.construct(GroupABO.AB, GroupRhesus.minus)
+    case "O-" => BloodGroup.construct(GroupABO.O, GroupRhesus.minus)
     case _ => throw new IllegalArgumentException
 
   /* Définissez une fonction qui retourne 'true' si et seulement si la transfusion de sang de type 'donor' est possible
    * pour un receveur de type 'recipient' (cf. https://fr.wikipedia.org/wiki/Groupe_sanguin#Compatibilit%C3%A9) */
-  def compatible(donor: BloodGroup, recipient: BloodGroup): Boolean = ???
+  def compatible(donor: BloodGroup, recipient: BloodGroup): Boolean = (donor, recipient) match
+    case (BloodGroup.construct(GroupABO.O, GroupRhesus.minus), BloodGroup.construct(_, _)) => true
+    case (BloodGroup.construct(GroupABO.O, GroupRhesus.plus), BloodGroup.construct(_, GroupRhesus.plus)) => true
+    case (BloodGroup.construct(GroupABO.B, GroupRhesus.minus), BloodGroup.construct(GroupABO.B | GroupABO.AB, _)) => true
+    case (BloodGroup.construct(GroupABO.B, GroupRhesus.plus), BloodGroup.construct(GroupABO.AB | GroupABO.B, GroupRhesus.plus)) => true
+    case (BloodGroup.construct(GroupABO.A, GroupRhesus.minus), BloodGroup.construct(GroupABO.A | GroupABO.AB, _)) => true
+    case (BloodGroup.construct(GroupABO.A, GroupRhesus.plus), BloodGroup.construct(GroupABO.A | GroupABO.AB, GroupRhesus.plus)) => true
+    case (BloodGroup.construct(GroupABO.AB, GroupRhesus.minus), BloodGroup.construct(GroupABO.AB, _)) => true
+    case (BloodGroup.construct(GroupABO.AB, GroupRhesus.plus), BloodGroup.construct(GroupABO.AB, GroupRhesus.plus)) => true
+    case _ => false
 
 
 object TP3Ex2:
@@ -40,7 +62,13 @@ object TP3Ex2:
     case Mult(e1: ArithExpr, e2: ArithExpr)
 
   /* Définissez une fonction pour évaluer une expression arithmétique. */
-  def eval(e: ArithExpr): Double = ???
+  def eval(e: ArithExpr): Double = e match {
+    case ArithExpr.Constant(v: Double) => v
+    case ArithExpr.Neg(e: ArithExpr) => -1 * eval(e)
+    case ArithExpr.Add(e1: ArithExpr, e2: ArithExpr) => eval(e1) + eval(e2)
+    case ArithExpr.Sub(e1: ArithExpr, e2: ArithExpr) => eval(e1) - eval(e2)
+    case ArithExpr.Mult(e1: ArithExpr, e2: ArithExpr) => eval(e1) * eval(e2)
+  }
 
 
 object TP3Ex3:
@@ -51,61 +79,103 @@ object TP3Ex3:
    * - x :: xs (avec x: A et xs: List[A]) */
 
   /* Retourne la longueur de la liste */
-  def length(l: List[Any]): Int = ???
+  def length(l: List[Any]): Int = l.length
 
   /* Retourne 'true ' si et seulement si x est contenu dans l */
-  def elem[A](x: A, l: List[A]): Boolean = ???
+  def elem[A](x: A, l: List[A]): Boolean = if l.isEmpty then false else (if x == l.head then true else elem(x, l.tail))
 
   /* Retourne la liste l privée de la première occurrence de l'élément a (si l'élément n'est pas présent, retourne une
    * une liste identique à l) */
-  def remove[A](a: A, l: List[A]): List[A] = ???
+  def remove[A](a: A, l: List[A]): List[A] = l match {
+    case Nil => Nil
+    case x1 :: x2 => if x1 == a then x2 else x1 :: remove(a, x2)
+  }
 
   /* Retourne la concaténation de l1 et l2 */
-  def append[A](l1: List[A], l2: List[A]): List[A] = ???
+  def append[A](l1: List[A], l2: List[A]): List[A] = (l1, l2) match {
+    case (Nil, l2) => l2
+    case (x1 :: x2, l2) => x1 :: append(x2, l2)
+  }
 
   /* Créé une liste contenant exactement n fois l'élément x */
   def replicate[A](x: A, n: Int): List[A] =
     if n < 0 then
       throw new IllegalArgumentException("negative integer")
     else
-      ???
+      n match {
+        case 0 => Nil
+        case _ => append(List(x), replicate(x, n - 1))
+      }
 
   /* Retourne 'true' si et seulement si la liste ne contient pas deux fois le même élément */
-  def unique(l: List[Any]): Boolean = ???
+  def unique(l: List[Any]): Boolean = if l.isEmpty then true else (unique(l.tail) && !elem(l.head, l.tail))
 
   /* Retourne 'true' si et seulement si l1 est une permutation de l2 (c'est-à-dire contient les mêmes éléments, pas
      nécessairement dans le même ordre) */
-  def permutation(l1: List[Any], l2: List[Any]): Boolean = ???
+  def permutation(l1: List[Any], l2: List[Any]): Boolean = (l1, l2) match {
+    case (Nil, l2) => true
+    case (x1 :: x2, l2) =>
+      if length(x2) == length(l2) - 1 then
+        if elem(x1, l2) then permutation(x2, remove(x1, l2)) else false
+      else false
+  }
 
   /* Retourne les n premiers éléments de la liste l */
-  def take[A](n: Int, l: List[A]): List[A] = ???
+  def take[A](n: Int, l: List[A]): List[A] = l match {
+    case Nil => Nil
+    case x1 :: x2 => if n > 0 then x1 :: take(n - 1, x2) else Nil
+  }
 
   /* Retourne les (length(l) - n) derniers éléments de la liste l */
-  def drop[A](n: Int, l: List[A]): List[A] = ???
+  def drop[A](n: Int, l: List[A]): List[A] = l match {
+    case Nil => Nil
+    case x1 :: x2 => if n > 0 then drop(n - 1, remove(x1, l)) else l
+  }
 
   /* Retourne la liste l en sens inverse. */
-  def reverse[A](l: List[A]): List[A] = ???
+  def reverse[A](l: List[A]): List[A] = l match {
+    case Nil => Nil
+    case x1 :: x2 => append(reverse(x2), x1 :: Nil)
+  }
 
   /* Joint deux listes pour former une liste de pairs. La liste retournée sera seulement aussi longue que la plus courte
    * des deux listes passées en argument). */
-  def zip[A,B](l1: List[A], l2: List[B]): List[(A,B)] = ???
+  def zip[A, B](l1: List[A], l2: List[B]): List[(A, B)] = (l1, l2) match {
+    case (Nil, Nil) => Nil
+    case (Nil, l2) => Nil
+    case (l1, Nil) => Nil // On coupe les listes quand les longueurs sont différentes zip((1,2,3),(1,2)) => ((1,1),(2,2))
+    case (l1_x1 :: l1_x2, l2_x1 :: l2_x2) => (l1_x1, l2_x1) :: zip(l1_x2, l2_x2)
+  }
 
   /* Trie une liste d'entiers. */
-  def sort(l: List[Int]): List[Int] = ???
+  def sort(l: List[Int]): List[Int] = l match {
+    case Nil => Nil
+    case x1 :: x2 => insert(x1, sort(x2))
+  }
 
-  /* Prend une liste, dont certains éléments peuvent des listes (elles-même pouvant contenir des listes et ainsi de
+  /* Insère l'élément 'a' dans la liste 'l' */
+  def insert(a: Int, l: List[Int]): List[Int] = l match {
+    case Nil => List(a)
+    case head :: next => if head >= a then a :: l else head :: insert(a, next)
+  }
+
+  /* Prend une liste, dont certains éléments peuvent être des listes (elles-même pouvant contenir des listes et ainsi de
    * suite) et qui retourne une version "applatie" de cette liste, c'est-à-dire qui contient les mêmes éléments mais
    * sans listes imbriquées.
    *
    * Indication: utilisez le pattern matching pour vérifier le type des éléments de la liste
    */
-  def flatten(l: List[Any]): List[Any] = ???
+  def flatten(l: List[Any]): List[Any] = l match {
+    case Nil => Nil
+    case n: AnyVal => n
+    case x1 :: x2 => ???
+  }
 
 
 object TP3Ex4:
 
   /* Pour une liste l = [x1, ... xn], retourne [f(x1), ..., f(xn)] */
-  def map[A,B](f: A => B, l: List[A]): List[B] = ???
+  def map[A, B](f: A => B, l: List[A]): List[B] = ???
 
   /* Retourne une liste contenant uniquement les éléments x de l qui satisfont p(x) */
   def filter[A](p: A => Boolean, l: List[A]): List[A] = ???
@@ -120,7 +190,7 @@ object TP3Ex4:
    * foldRight retourne f(x1, f(x2, (..., f(xn, e))) */
   def foldRight[A, B](e: B, f: (A, B) => B, l: List[A]): B = l match
     case Nil => e
-    case x :: xs => f(x, foldRight(e,f,xs))
+    case x :: xs => f(x, foldRight(e, f, xs))
 
   /* utilisez fold pour redéfinir les méthodes length, append, reverse et map */
   def length2(l: List[Any]): Int = ???
@@ -129,7 +199,7 @@ object TP3Ex4:
 
   def reverse2[A](l: List[A]): List[A] = ???
 
-  def map2[A,B](f: A => B, l: List[A]): List[B] = ???
+  def map2[A, B](f: A => B, l: List[A]): List[B] = ???
 
 
 object TP3Ex5:
@@ -151,8 +221,8 @@ object TP3Ex5:
    * Commencez à définir la fonction eval. Vous constaterez qu'une grande partie du code se répète pour tester si le
    * résultat d'une évaluation est None ou Some(v). Afin d'éviter cette duplication, vous pouvez définir et utiliser
    * les fonctions suivantes, qui appliquent une fonction (unaire ou binaire) à des arguments de type Option[T].  */
-  def liftOption1[A,B](f: A => B, a: Option[A]): Option[B] = ???
+  def liftOption1[A, B](f: A => B, a: Option[A]): Option[B] = ???
 
-  def liftOption2[A,B,C](f: (A, B) => C, a: Option[A], b: Option[B]): Option[C] = ???
+  def liftOption2[A, B, C](f: (A, B) => C, a: Option[A], b: Option[B]): Option[C] = ???
 
   def eval(e: ArithExpr): Option[Double] = ???
